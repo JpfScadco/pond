@@ -1,4 +1,4 @@
-FROM node:6.6.0
+FROM node:18-alpine
 
 COPY npm-shrinkwrap.json /tmp/
 COPY package.json /tmp/

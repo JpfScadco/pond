@@ -17,8 +17,9 @@ function setGlobals() {
   window.usingSmallLogo = false
 
   
-  // color pallet // blue        l blue        l green         orange         d orange
-  window.pallet = [[105,210,231], [167,219,216], [224,228,204], [243,134,48], [250,105,0]]
+  // color palette - extracted from LE POND logo colors
+  // coral pink,  bright teal,  salmon pink,  cyan blue,    deep coral,   purple pink,  light cyan
+  window.pallet = [[255,102,128], [64,224,255], [255,128,102], [102,255,255], [255,64,102], [255,102,204], [128,255,255]]
   window.lastColor = new Color()
   window.GAME = {
     MENU: {
@@ -55,6 +56,12 @@ function init() {
   GAME.levelBallParticles = []
   GAME.endGameParticles = []
   GAME.firstLoop = true
+  
+  // Initialize API tracking for this game session
+  if (typeof API !== 'undefined') {
+    API.init()
+  }
+  
   //previousTime = Date.now() - previousTime
   requestAnimFrame(draw)
 }
@@ -225,6 +232,12 @@ function draw(time) {
       // cleanup dead fish - in here for performance
       if(fishes[i].dead) {
         if(fishes[i] === player) {
+          // Player has died - send score to API
+          if (typeof API !== 'undefined') {
+            var gameTime = Date.now() - API.stats.gameStartTime;
+            API.sendDeathScore(player.size, gameTime);
+          }
+          
           setTimeout(function(){
             GAME.state = 'menu'
           }, 4000)
@@ -246,8 +259,16 @@ function draw(time) {
             if(fish.collide(fish2)) {
               if(fish.size >= fish2.size){
                 fish2.killedBy(fish)
+                // Track when player eats another fish
+                if (fish === player && typeof API !== 'undefined') {
+                  API.incrementFishEaten()
+                }
               } else {
                 fish.killedBy(fish2)
+                // Track when another fish eats the player (for completeness)
+                if (fish === player && typeof API !== 'undefined') {
+                  // Player was eaten - no increment needed as they're dead
+                }
               }
             }
           }
